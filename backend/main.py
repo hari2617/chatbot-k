@@ -67,7 +67,7 @@ async def upload_pdf(file: UploadFile = File(...)):
         if "error" in result:
              raise HTTPException(status_code=400, detail=result["error"])
         # Return success but don't store anything (stateless)
-        return {"message": "PDF validated successfully"}
+        return result  # Return the actual result from process_pdf
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

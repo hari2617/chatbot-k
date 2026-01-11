@@ -1,7 +1,7 @@
 fastapi
 uvicorn
 requests
-pymupdf
+pdfplumber
 faiss-cpu
 numpy
 python-multipart

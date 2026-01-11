@@ -1,4 +1,4 @@
-import fitz  # PyMuPDF
+import pdfplumber
 import faiss
 import numpy as np
 import os
@@ -16,10 +16,13 @@ def get_embedding_model():
     return _EMBEDDING_MODEL
 
 def extract_text_from_pdf(pdf_bytes: bytes) -> str:
-    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
     text = ""
-    for page in doc:
-        text += page.get_text()
+    # pdfplumber needs to work with a file path or file-like object
+    import io
+    pdf_stream = io.BytesIO(pdf_bytes)
+    with pdfplumber.open(pdf_stream) as pdf:
+        for page in pdf.pages:
+            text += page.extract_text() or ""  # Handle potential None values
     return text
 
 def create_chunks(text: str, chunk_size: int = 500):
@@ -47,7 +50,8 @@ def process_pdf(pdf_bytes: bytes):
     vector_index.add(np.array(embeddings))
     
     print(f"Processed PDF. Created {len(chunks)} chunks.")
-    return {"message": "PDF processed successfully", "chunks_count": len(chunks), "vector_index": vector_index, "chunks": chunks}
+    # Don't return vector_index or embeddings as they can't be serialized to JSON
+    return {"message": "PDF processed successfully", "chunks_count": len(chunks)}
 
 def ask_pdf_with_data(question: str, api_key: str, vector_index, chunks):
     # 1. Embed Question
