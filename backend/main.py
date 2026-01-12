@@ -13,8 +13,27 @@ import pdf_rag
 import image_qa
 
 
-
 app = FastAPI(title="Groq Chatbot API")
+
+# For Render free tier, skip heavy model loading at startup to avoid hanging
+# Models will be loaded on first use instead
+pass  # Placeholder to maintain structure
+
+@app.get("/")
+async def health_check():
+    """Health check endpoint for Render warm-up"""
+    return {"status": "healthy", "message": "Server is running"}
+
+@app.get("/warmup")
+async def warmup():
+    """Warm-up endpoint to initialize models and resources"""
+    # Trigger loading of embedding model if needed
+    from pdf_rag import get_embedding_model
+    try:
+        model = get_embedding_model()  # This will load the model if not already loaded
+        return {"status": "warmed_up", "message": "Models and resources initialized"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 # Enable CORS for Flutter
 app.add_middleware(
@@ -125,8 +144,3 @@ async def ask_image(request: ImageQueryRequest):
     except Exception as e:
         print(f"Error in ask_image endpoint: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to process image question: {str(e)}")
-
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
-    uvicorn.run(app, host="0.0.0.0", port=port)
